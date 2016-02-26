@@ -1,4 +1,5 @@
 import scala.language.implicitConversions
+import scala.language.higherKinds
 
 object day0 {
   def head[A](a: List[A]) = a.head
@@ -27,7 +28,7 @@ object day0 {
   // Since Scala 2.8, context bounds
   def plus2y[A : CanPlus2](a: A, b: A) = implicitly[CanPlus2[A]].+(a, b)
 
-  @deprecated /* Since Scala 2.11.0-M2 */
+  @deprecated(message = "deprecated language feature", since = "2.11.0-M2") /* Since Scala 2.11.0-M2 */
   def plus1x[A <% CanPlus1[A]](a: A, b: A): A = a.+(b)
 
   def plus1y[A](a: CanPlus1[A], b: A): A = a + b
