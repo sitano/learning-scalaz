@@ -1,4 +1,5 @@
 import scala.language.implicitConversions
+import scala.language.higherKinds
 
 object day1 {
   object case1 {
@@ -52,5 +53,22 @@ object day1 {
 
     // STILL NOPE r === r
     // Why it is failing: Red -> (class) Red2 -> (val) Equal[Red2] -> EqualOps[Red2]
+  }
+
+  private[this] object case3 {
+    sealed trait A
+    case object AA extends A
+    trait B[F] { def x = 1 }
+    trait C[F] { def y = 2 }
+
+    implicit class ToB(val self: A) extends B[A]
+
+    implicit def toC[F](a: B[F]): C[F] = new C[F] {}
+    implicit class ToC[F](val self: B[F]) extends C[F]
+    implicit class Z(val self: B[A]) { val z = 3}
+    implicit val vToC: C[A] = new C[A] {}
+
+    // AA.y (facepalm)
+    // AA.z (facepalm)
   }
 }
