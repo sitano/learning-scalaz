@@ -56,6 +56,12 @@ object day1 {
   }
 
   private[this] object case3 {
+    // http://docs.scala-lang.org/tutorials/FAQ/finding-implicits
+
+    // http://docs.scala-lang.org/tutorials/FAQ/chaining-implicits.html
+    // Scala does not allow two such implicit conversions taking place, however, so one cannot got from A to C using an implicit A to B and another implicit B to C. Is there a way around this restriction?
+    // However, if an implicit definition requires an implicit parameter itself, Scala will look for additional implicit values for as long as needed.
+
     sealed trait A
     case object AA extends A
     trait B[F] { def x = 1 }
