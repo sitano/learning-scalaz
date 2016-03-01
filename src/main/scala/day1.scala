@@ -1,65 +1,56 @@
+import scala.language.implicitConversions
+
 object day1 {
-  sealed trait TrafficLight {}
-  case object Red extends TrafficLight
-  case object Yellow extends TrafficLight
-  case object Green extends TrafficLight
+  object case1 {
+    import scalaz._
+    import scalaz.Scalaz._
 
-  /**
-    * Conditional.
-    *
-    * {{{
-    * p q  p --> q
-    * 0 0  1
-    * 0 1  1
-    * 1 0  0
-    * 1 1  1
-    * }}}
-    */
-  final def conditional(p: Boolean, q: => Boolean) = !p || q
+    sealed trait TrafficLight {}
 
-  // Our EqualCV is contravariant
-  trait EqualCV[-F] { self =>
-    def equal(a1: F, a2: F): Boolean
+    case object Red extends TrafficLight
+    case object Yellow extends TrafficLight
+    case object Green extends TrafficLight
 
-    /** @return true, if `equal(f1, f2)` is known to be equivalent to `f1 == f2` */
-    def equalIsNatural: Boolean = false
+    implicit val eqTL: Equal[TrafficLight] = Equal.equal(_ == _)
 
-    trait EqualLaw {
-      def commutative(f1: F, f2: F): Boolean = equal(f1, f2) == equal(f2, f1)
-      def reflexive(f: F): Boolean = equal(f, f)
-      def transitive(f1: F, f2: F, f3: F): Boolean = {
-        conditional(equal(f1, f2) && equal(f2, f3), equal(f1, f3))
-      }
-      def naturality(f1: F, f2: F): Boolean = {
-        conditional(equalIsNatural, equal(f1, f2) == (f1 == f2))
-      }
-    }
-    def equalLaw = new EqualLaw {}
+    val x: TrafficLight = Red
 
-    // val equalSyntax = new scalaz.syntax.EqualSyntax[F] { def F = EqualCV.this }
+    x === Yellow.asInstanceOf[TrafficLight]
+    x === Red
+    x === Yellow
+
+    implicit def TraitToSuper(self: TrafficLight)(implicit F: Equal[TrafficLight]) = F
+
+    Red.asInstanceOf[TrafficLight] === Yellow
+    // NOPE Red === Yellow
   }
 
-  object EqualCV {
-    @inline def apply[F](implicit F: EqualCV[F]): EqualCV[F] = F
+  object case2 {
+    import scalaz._
+    import scalaz.Scalaz._
 
-    ////
-    /** Creates an Equal instance based on universal equality, `a1 == a2` */
-    def equalA[A]: EqualCV[A] = new EqualCV[A] {
-      def equal(a1: A, a2: A): Boolean = a1 == a2
-      override def equalIsNatural: Boolean = true
-    }
+    sealed class TrafficLight
 
-    /** Creates an Equal instance based on reference equality, `a1 eq a2` */
-    def equalRef[A <: AnyRef]: EqualCV[A] = new EqualCV[A] {
-      def equal(a1: A, a2: A): Boolean = a1 eq a2
-    }
+    class Red extends TrafficLight
+    class Yellow extends TrafficLight
+    class Green extends TrafficLight
 
-    def equal[A](f: (A, A) => Boolean): EqualCV[A] = new EqualCV[A] {
-      def equal(a1: A, a2: A) = f(a1, a2)
-    }
+    val r = new Red
+    val y = new Yellow
+    val g = new Green
+
+    implicit val eqTL: Equal[TrafficLight] = Equal.equal(_ == _)
+    implicit def RedToTL(self: Red): TrafficLight = self
+
+    implicit class Red2(val self: Red)(implicit F: Equal[TrafficLight]) { def x = 1 }
+    implicit val eqTL2: Equal[Red2] = Equal.equal(_ == _)
+
+    // NOT INT implicit val eqTL3: Equal[Red] = Equal.equal(_ == _)
+    // NOT INT r === r
+
+    r.x
+
+    // STILL NOPE r === r
+    // Why it is failing: Red -> (class) Red2 -> (val) Equal[Red2] -> EqualOps[Red2]
   }
-
-  implicit val trafficLightEquality: EqualCV[TrafficLight] = EqualCV.equal(_ == _)
-
-  // TODO Red ===== Green via EqualCVOps
 }
