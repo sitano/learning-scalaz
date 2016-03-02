@@ -1,5 +1,6 @@
 import scala.language.implicitConversions
 import scala.language.higherKinds
+import scala.reflect.ClassTag
 
 object day1 {
   object case1 {
@@ -76,5 +77,52 @@ object day1 {
 
     // AA.y (facepalm)
     // AA.z (facepalm)
+  }
+
+  object case4 {
+    import scalaz._
+    import scalaz.Scalaz._
+
+    sealed trait TrafficLight {}
+
+    case class Red() extends TrafficLight
+    case class Yellow() extends TrafficLight
+    case class Green() extends TrafficLight
+
+    implicit val eqTL: Equal[TrafficLight] = Equal.equal(_ == _)
+
+    final class EqualOps[F] (val self: F)(implicit val F: Equal[F]) {
+      final def ====(other: F): Boolean = F.equal(self, other)
+    }
+
+    // DO NOT HELP: implicit def ToEqualOps[F, F0 >: F](v: F)(implicit F0: Equal[F0]): EqualOps[F0] = new EqualOps[F0](v)
+    implicit def ToEqualOps1(v: Red) = new EqualOps[TrafficLight](v)
+
+    Red() ==== Yellow()
+  }
+
+  object case5 {
+    sealed trait A
+    case object AA extends A
+
+    trait B[F] { def t(implicit T: ClassTag[F]) = T.toString() }
+
+    implicit class ToB(val self: A) extends B[A]
+
+    assert { AA.t == "A" }
+  }
+
+  object case6 {
+    sealed trait TrafficLight {}
+
+    case class Red() extends TrafficLight
+    case class Yellow() extends TrafficLight
+    case class Green() extends TrafficLight
+
+    trait Equal[-F] { self =>
+      def equal(a1: F, a2: F): Boolean
+    }
+
+    // val rEq: Equal[Red] = new Equal[TrafficLight] { override def equal(a1: TrafficLight, a2: TrafficLight): Boolean = ??? }
   }
 }
