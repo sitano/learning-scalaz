@@ -123,6 +123,48 @@ object day1 {
       def equal(a1: F, a2: F): Boolean
     }
 
-    // val rEq: Equal[Red] = new Equal[TrafficLight] { override def equal(a1: TrafficLight, a2: TrafficLight): Boolean = ??? }
+    val rEq: Equal[Red] = new Equal[TrafficLight] { override def equal(a1: TrafficLight, a2: TrafficLight): Boolean = ??? }
+  }
+
+  object case7 {
+    trait CanTrue[F] { self =>
+      def ?(a: F): Boolean
+    }
+
+    object CanTrue {
+      def apply[F : CanTrue](a: F): CanTrue[F] = implicitly[CanTrue[F]]
+      def can[F](f: F => Boolean): CanTrue[F] = new CanTrue[F] {
+        override def ?(a: F): Boolean = f(a)
+      }
+    }
+
+    trait CanTrueOps[F] {
+      implicit val F: CanTrue[F]
+
+      def self: F
+      final def ? : Boolean = F ? self
+    }
+
+    object CanTrueOps {
+      implicit def bindCanTrueOps[F](a: F)(implicit f: CanTrue[F]): CanTrueOps[F] = new CanTrueOps[F] {
+        override implicit val F: CanTrue[F] = f
+        override def self: F = a
+      }
+    }
+
+    implicit val intCan: CanTrue[Int] = CanTrue can { _ == 0 }
+
+    implicit def listCan[F]: CanTrue[List[F]] = CanTrue can {
+      case Nil => false
+      case _ => true
+    }
+
+    implicit val nilCan: CanTrue[Nil.type] = CanTrue can { _ => false }
+
+    implicit val boolCan: CanTrue[Boolean] = CanTrue can identity
+
+    import CanTrueOps.bindCanTrueOps
+
+    def ?:[F : CanTrue, B, C](c: F)(succ: => B)(fail: => C) = if (c.?) succ else fail
   }
 }
